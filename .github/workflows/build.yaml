@@ -1,0 +1,38 @@
+name: Build the python app
+
+on:
+  push:
+    tags: "*"
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt pyinstaller
+      
+      - name: Run PyInstaller
+        run: |
+          python -m pyinstaller --onefile --noconsole --icon=icon.ico main.py
+      
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Datashare Windows
+          path: dist/datashare.exe
+
+      - name: Create release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+            files: './dist/**/**'
+            tag_name: ${{ env.custom_tag }}-${{ GITHUB.RUN_NUMBER }}
+            body: 'New python app release'
+            token: ${{ secrets.PRIVATE_TOKEN }}
+            fail_on_unmatched_files: false
